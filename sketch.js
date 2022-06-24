@@ -12,6 +12,9 @@ let myFont, myGate;
 let myCapture, myVida;
 let mic;
 let bounce;
+
+let glitch;
+let pos=[];
 function initCaptureDevice() {
   try {
     myCapture = createCapture(VIDEO);
@@ -63,6 +66,9 @@ function setup() {
     image. The value should be in the range from 0.0 to 1.0 (float).
   */
   myVida.imageFilterThreshold = 0.06;
+  /*Glitch Mode*/
+  glitch = new Glitch();
+  glitch.pixelate(1);
 }
 
 function draw() {
@@ -75,6 +81,19 @@ function draw() {
       repetition).
     */
     myVida.update(myCapture);
+
+    fill(255);
+    textFont(myFont);
+    textSize(32);
+    textAlign(CENTER, CENTER);
+    text(label, 0, 64 - height / 2);
+    if (mouseIsPressed) text(label,mouseX-width/2,mouseY-height/2);
+    /* If a knock is detected, trigger*/
+    if (label == "Knock") {
+      bounce = 0;
+    } else {
+      //      bounce = (sin(frameCount / 50) * height) / 6;
+    }
     /*
       Now we can display images: source video (mirrored) and subsequent stages
       of image transformations made by VIDA.
@@ -91,18 +110,6 @@ function draw() {
     pop();
 
     push();
-//    rotateX(frameCount / 100);
-    rotateY(frameCount / 100);
-    translate(0, 0, height / 4);
-    scale(-1, 1);
-    //    texture(myVida.thresholdImage);
-    texture(myVida.currentImage);
-    rotateY(-PI);
-    tint(255);
-    box(height / 10);
-    pop();
-
-    push();
     translate(0, height / 3, -height / 2);
     rotateX(PI / 2);
     rotateY(PI);
@@ -110,6 +117,26 @@ function draw() {
     //    texture(myVida.differenceImage);
     tint(0, 255, 0, 255);
     plane(height * 3);
+    pop();
+    	if(frameCount % 4 === 0) {
+			glitch.loadImage(myCapture);
+		
+		// map mouseX to # of randomBytes() + mouseY to limitBytes()
+		glitch.limitBytes(0.1);
+		glitch.randomBytes(1);
+		glitch.buildImage();
+	}
+
+    push();
+    //    rotateX(frameCount / 100);
+    rotateY(frameCount / 100);
+    translate(0, 0, height / 4);
+    scale(-1, 1);
+    texture(glitch.image);
+    //texture(myVida.currentImage);
+    rotateY(-PI);
+    tint(255);
+    box(height / 10);
     pop();
 
     /*
@@ -121,17 +148,6 @@ function draw() {
       will be used for the current handling of zones and reading their statuses
       (we must also remember about controlling the sound).
     */
-    fill(255);
-    textFont(myFont);
-    textSize(32);
-    textAlign(CENTER, CENTER);
-    text(label, 0, 64 - height / 2);
-    /* If a knock is detected, trigger*/
-    if (label == "Knock") {
-      bounce = 0;
-    } else {
-//      bounce = (sin(frameCount / 50) * height) / 6;
-    }
   } else {
     /*
       If there are problems with the capture device (it's a simple mechanism so
@@ -142,9 +158,9 @@ function draw() {
   }
 }
 
-function lock(){
+function lock() {
   fill(255);
-  circle(0,0,height/20);
+  circle(0, 0, height / 20);
 }
 // The model recognizing a sound will trigger this event
 function gotResult(error, results) {
