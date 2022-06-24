@@ -11,7 +11,7 @@ let myFont, myGate;
 
 let myCapture, myVida;
 let mic;
-
+let bounce;
 function initCaptureDevice() {
   try {
     myCapture = createCapture(VIDEO);
@@ -80,43 +80,38 @@ function draw() {
       of image transformations made by VIDA.
 */
     brightness(255);
-    
+    bounce = (sin(frameCount / 50) * height) / 6;
     push();
-    translate(0, (sin(frameCount / 50) * height) / 6);
+    translate(0, bounce);
     scale(-1, 1);
-    texture(myVida.differenceImage);
-    rotateY(-PI / 2);
+    texture(myVida.thresholdImage);
+    rotateY(-PI);
     tint(0, 255, 0, 255);
-    sphere(height / 6);
+    sphere(height / 5);
     pop();
 
     push();
-    rotateX(frameCount / 100);
-    rotateZ(frameCount / 100);
-    translate(-width / 8, height / 8, 100);
+//    rotateX(frameCount / 100);
+    rotateY(frameCount / 100);
+    translate(0, 0, height / 4);
     scale(-1, 1);
     //    texture(myVida.thresholdImage);
-    texture(myVida.differenceImage);
+    texture(myVida.currentImage);
     rotateY(-PI);
     tint(255);
     box(height / 10);
     pop();
 
     push();
-    translate(0, height / 4, -height / 2);
+    translate(0, height / 3, -height / 2);
     rotateX(PI / 2);
-    rotateY(0);
-    texture(myVida.thresholdImage);
+    rotateY(PI);
+    texture(myVida.differenceImage);
     //    texture(myVida.differenceImage);
-    plane(height * 2);
+    tint(0, 255, 0, 255);
+    plane(height * 3);
     pop();
 
-    let r = sin(frameCount / 200);
-    push();
-    rotateY(r);
-    texture(myGate);
-    plane(height / 2);
-    pop();
     /*
       VIDA has two built-in versions of the function drawing active zones:
         [your vida object].drawActiveZones(x, y);
@@ -133,7 +128,9 @@ function draw() {
     text(label, 0, 64 - height / 2);
     /* If a knock is detected, trigger*/
     if (label == "Knock") {
+      bounce = 0;
     } else {
+//      bounce = (sin(frameCount / 50) * height) / 6;
     }
   } else {
     /*
@@ -145,6 +142,10 @@ function draw() {
   }
 }
 
+function lock(){
+  fill(255);
+  circle(0,0,height/20);
+}
 // The model recognizing a sound will trigger this event
 function gotResult(error, results) {
   if (error) {
