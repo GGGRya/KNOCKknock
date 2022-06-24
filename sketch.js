@@ -14,7 +14,8 @@ let mic;
 let bounce;
 
 let glitch;
-let pos=[];
+let pos = [];
+let mask, lock;
 function initCaptureDevice() {
   try {
     myCapture = createCapture(VIDEO);
@@ -69,6 +70,7 @@ function setup() {
   /*Glitch Mode*/
   glitch = new Glitch();
   glitch.pixelate(1);
+  mask = createGraphics(width, height);
 }
 
 function draw() {
@@ -87,7 +89,7 @@ function draw() {
     textSize(32);
     textAlign(CENTER, CENTER);
     text(label, 0, 64 - height / 2);
-    if (mouseIsPressed) text(label,mouseX-width/2,mouseY-height/2);
+    if (mouseIsPressed) text(label, mouseX - width / 2, mouseY - height / 2);
     /* If a knock is detected, trigger*/
     if (label == "Knock") {
       bounce = 0;
@@ -118,7 +120,7 @@ function draw() {
     tint(0, 255, 0, 255);
     plane(height * 3);
     pop();
-    	if(frameCount % 4 === 0) {
+    /*  	if(frameCount % 4 === 0) {
 			glitch.loadImage(myCapture);
 		
 		// map mouseX to # of randomBytes() + mouseY to limitBytes()
@@ -126,17 +128,21 @@ function draw() {
 		glitch.randomBytes(1);
 		glitch.buildImage();
 	}
-
+*/
     push();
     //    rotateX(frameCount / 100);
     rotateY(frameCount / 100);
-    translate(0, 0, height / 4);
+    rotateX(frameCount / 100);
+    rotateZ(frameCount / 400);
+    translate(0, 0, height / 6);
     scale(-1, 1);
-    texture(glitch.image);
+    //texture(glitch.image);
     //texture(myVida.currentImage);
+    lockMaskShape();
+    lockMaskDisplay();
     rotateY(-PI);
     tint(255);
-    box(height / 10);
+    box(height / 5);
     pop();
 
     /*
@@ -158,10 +164,25 @@ function draw() {
   }
 }
 
-function lock() {
-  fill(255);
-  circle(0, 0, height / 20);
-}
+const lockMaskShape = () => {
+  mask.push();
+  mask.noStroke();
+  mask.triangle(
+    height / 2,
+    height / 3,
+    height / 3,
+    height * 0.75,
+    (height * 2) / 3,
+    height * 0.75
+  );
+  mask.circle(height / 2, height / 3, height / 4);
+  mask.pop();
+};
+const lockMaskDisplay = () => {
+  myCapture.mask(mask);
+  //  texture(myCapture);
+  texture(mask);
+};
 // The model recognizing a sound will trigger this event
 function gotResult(error, results) {
   if (error) {
