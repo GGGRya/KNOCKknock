@@ -70,7 +70,7 @@ function setup() {
   /*Glitch Mode*/
   glitch = new Glitch();
   glitch.pixelate(1);
-  mask = createGraphics(width, height);
+  mask = createGraphics(height, height);
 }
 
 function draw() {
@@ -134,7 +134,7 @@ function draw() {
     rotateY(frameCount / 100);
     rotateX(frameCount / 100);
     rotateZ(frameCount / 400);
-    translate(0, 0, height / 6);
+    translate(0, 0, height / 4);
     scale(-1, 1);
     //texture(glitch.image);
     //texture(myVida.currentImage);
@@ -142,7 +142,7 @@ function draw() {
     lockMaskDisplay();
     rotateY(-PI);
     tint(255);
-    box(height / 5);
+    box(height / 6);
     pop();
 
     /*
