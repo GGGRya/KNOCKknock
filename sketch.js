@@ -11,11 +11,12 @@ let myFont, myGate;
 
 let myCapture, myVida;
 let mic;
-let bounce;
+let bounce = 0, float=0;
 
 let glitch;
 let pos = [];
 let mask, lock;
+let t=0;
 function initCaptureDevice() {
   try {
     myCapture = createCapture(VIDEO);
@@ -74,6 +75,7 @@ function setup() {
 }
 
 function draw() {
+  t++;
   if (myCapture !== null && myCapture !== undefined) {
     // safety first
     background(10);
@@ -93,17 +95,18 @@ function draw() {
     /* If a knock is detected, trigger*/
     if (label == "Knock") {
       bounce = 0;
+      float = 0;
+      t=0;
     } else {
-      //      bounce = (sin(frameCount / 50) * height) / 6;
+      bounce += sin(t/ 40) *2.5;
     }
     /*
       Now we can display images: source video (mirrored) and subsequent stages
       of image transformations made by VIDA.
 */
     brightness(255);
-    bounce = (sin(frameCount / 50) * height) / 6;
     push();
-    translate(0, bounce);
+    translate(0, -height/8+bounce);
     scale(-1, 1);
     texture(myVida.thresholdImage);
     rotateY(-PI);
@@ -112,7 +115,7 @@ function draw() {
     pop();
 
     push();
-    translate(0, height / 3, -height / 2);
+    translate(0, height / 4, -height / 2);
     rotateX(PI / 2);
     rotateY(PI);
     texture(myVida.differenceImage);
@@ -131,16 +134,15 @@ function draw() {
 */
     push();
     //    rotateX(frameCount / 100);
-    rotateY(frameCount / 100);
-    rotateX(frameCount / 100);
-    rotateZ(frameCount / 400);
+    rotateY(t/ 100);
+    rotateX(t/ 200);
+    rotateZ(t/ 200);
     translate(0, 0, height / 4);
     scale(-1, 1);
     //texture(glitch.image);
     //texture(myVida.currentImage);
     lockMaskShape();
     lockMaskDisplay();
-    rotateY(-PI);
     tint(255);
     box(height / 6);
     pop();
@@ -178,8 +180,8 @@ const lockMaskShape = () => {
   mask.circle(height / 2, height / 3, height / 4);
   mask.pop();
 };
-const lockMaskDisplay = () => {
-  myCapture.mask(mask);
+const lockMaskDisplay = () => {  
+  //lock.mask(mask);
   //  texture(myCapture);
   texture(mask);
 };
