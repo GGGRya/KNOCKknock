@@ -11,12 +11,16 @@ let myFont, myGate;
 
 let myCapture, myVida;
 let mic;
-let bounce = 0, float=0;
 
-let glitch;
-let pos = [];
-let mask, lock;
-let t=0;
+//Visual
+let video;
+let facemesh;
+let predictionsF = [];
+let handpose;
+let predictionsH = [];
+let s = 1;
+let den = 1;
+let pg;
 function initCaptureDevice() {
   try {
     myCapture = createCapture(VIDEO);
@@ -68,17 +72,30 @@ function setup() {
     image. The value should be in the range from 0.0 to 1.0 (float).
   */
   myVida.imageFilterThreshold = 0.06;
-  /*Glitch Mode*/
-  glitch = new Glitch();
-  glitch.pixelate(1);
-  mask = createGraphics(height, height);
+  //
+  s = 768 / (640 * den);
+  facemesh = ml5.facemesh(myCapture, modelReadyF);
+  handpose = ml5.handpose(myCapture, modelReadyH);
+  facemesh.on("predict", (results) => {
+    predictionsF = results;
+  });
+  handpose.on("predict", (results) => {
+    predictionsH = results;
+  });
+  pg = createGraphics(width, width * 0.75);
 }
-
+function modelReadyF() {
+  console.log("Model ready!" + ":" + "facemesh");
+}
+function modelReadyH() {
+  console.log("Model ready!" + ":" + "handpose");
+}
 function draw() {
-  t++;
+  pg.background(0);
+  drawKeypoints();
   if (myCapture !== null && myCapture !== undefined) {
     // safety first
-    background(10);
+    background(0);
     /*
       Call VIDA update function, to which we pass the current video frame as a
       parameter. Usually this function is called in the draw loop (once per
@@ -94,11 +111,7 @@ function draw() {
     if (mouseIsPressed) text(label, mouseX - width / 2, mouseY - height / 2);
     /* If a knock is detected, trigger*/
     if (label == "Knock") {
-      bounce = 0;
-      float = 0;
-      t=0;
     } else {
-      bounce += sin(t/ 40) *2.5;
     }
     /*
       Now we can display images: source video (mirrored) and subsequent stages
@@ -106,7 +119,6 @@ function draw() {
 */
     brightness(255);
     push();
-    translate(0, -height/8+bounce);
     scale(-1, 1);
     texture(myVida.thresholdImage);
     rotateY(-PI);
@@ -115,13 +127,12 @@ function draw() {
     pop();
 
     push();
-    translate(0, height / 4, -height / 2);
-    rotateX(PI / 2);
+    translate(0, 0);
     rotateY(PI);
-    texture(myVida.differenceImage);
-    //    texture(myVida.differenceImage);
-    tint(0, 255, 0, 255);
-    plane(height * 3);
+    //   texture(myVida.differenceImage);
+    texture(pg);
+    //    tint(0, 255, 0, 255);
+    plane(width, 0.75 * width);
     pop();
     /*  	if(frameCount % 4 === 0) {
 			glitch.loadImage(myCapture);
@@ -132,20 +143,6 @@ function draw() {
 		glitch.buildImage();
 	}
 */
-    push();
-    //    rotateX(frameCount / 100);
-    rotateY(t/ 100);
-    rotateX(t/ 200);
-    rotateZ(t/ 200);
-    translate(0, 0, height / 4);
-    scale(-1, 1);
-    //texture(glitch.image);
-    //texture(myVida.currentImage);
-    lockMaskShape();
-    lockMaskDisplay();
-    tint(255);
-    box(height / 6);
-    pop();
 
     /*
       VIDA has two built-in versions of the function drawing active zones:
@@ -165,26 +162,36 @@ function draw() {
     background(255, 0, 0);
   }
 }
+function drawKeypoints() {
+  pg.fill(0, 255, 0);
+  pg.stroke(0, 200, 0);
+  for (let i = 0; i < predictionsF.length; i += 1) {
+    const keypoints = predictionsF[i].scaledMesh;
 
-const lockMaskShape = () => {
-  mask.push();
-  mask.noStroke();
-  mask.triangle(
-    height / 2,
-    height / 3,
-    height / 3,
-    height * 0.75,
-    (height * 2) / 3,
-    height * 0.75
-  );
-  mask.circle(height / 2, height / 3, height / 4);
-  mask.pop();
-};
-const lockMaskDisplay = () => {  
-  //lock.mask(mask);
-  //  texture(myCapture);
-  texture(mask);
-};
+    for (let j = 0; j < keypoints.length; j += 1) {
+      const [x, y] = keypoints[j];
+      pg.stroke(0, 200, 0);
+      pg.fill(0, 255, 0);
+      pg.ellipse(x * s, y * s, 5 * s, 5 * s);
+    }
+  }
+  for (let i = 0; i < predictionsH.length; i += 1) {
+    const predictionH = predictionsH[i];
+    for (let j = 0; j < predictionH.landmarks.length; j += 1) {
+      const keypoint = predictionH.landmarks[j];
+      const keypoint0 = predictionH.landmarks[j + 1];
+      if (j == 0) pg.ellipse(keypoint[0] * s, keypoint[1] * s, 50 * s, 50 * s);
+      else pg.ellipse(keypoint[0] * s, keypoint[1] * s, 10 * s, 10 * s);
+      if (j > 0 && j % 4 !== 0)
+        pg.line(
+          keypoint[0] * s,
+          keypoint[1] * s,
+          keypoint0[0] * s,
+          keypoint0[1] * s
+        );
+    }
+  }
+}
 // The model recognizing a sound will trigger this event
 function gotResult(error, results) {
   if (error) {
@@ -194,7 +201,4 @@ function gotResult(error, results) {
   // The results are in an array ordered by confidence.
   // console.log(results[0]);
   label = results[0].label;
-}
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight, WEBGL);
 }
